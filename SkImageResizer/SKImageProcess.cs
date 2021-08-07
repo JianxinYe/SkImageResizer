@@ -18,6 +18,7 @@ namespace SkImageResizer
         /// <param name="scale">縮放比例</param>
         public void ResizeImages(string sourcePath, string destPath, double scale)
         {
+            //TestPush
             if (!Directory.Exists(destPath))
             {
                 Directory.CreateDirectory(destPath);
