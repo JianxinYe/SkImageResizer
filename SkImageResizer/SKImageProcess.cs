@@ -17,8 +17,7 @@ namespace SkImageResizer
         /// <param name="destPath">產生圖片目的目錄路徑</param>
         /// <param name="scale">縮放比例</param>
         public void ResizeImages(string sourcePath, string destPath, double scale)
-        {
-            //TestPush
+        {            
             if (!Directory.Exists(destPath))
             {
                 Directory.CreateDirectory(destPath);
@@ -47,36 +46,44 @@ namespace SkImageResizer
             }
         }
 
-        public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
+        public Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             if (!Directory.Exists(destPath))
             {
                 Directory.CreateDirectory(destPath);
             }
 
-            await Task.Yield();
+            //await Task.Yield();
+            List<Task> tasks = new List<Task>();
 
             var allFiles = FindImages(sourcePath);
+
             foreach (var filePath in allFiles)
             {
-                var bitmap = SKBitmap.Decode(filePath);
-                var imgPhoto = SKImage.FromBitmap(bitmap);
-                var imgName = Path.GetFileNameWithoutExtension(filePath);
 
-                var sourceWidth = imgPhoto.Width;
-                var sourceHeight = imgPhoto.Height;
+                tasks.Add(Task.Run(() =>
+                {
+                    var bitmap = SKBitmap.Decode(filePath);
+                    var imgPhoto = SKImage.FromBitmap(bitmap);
+                    var imgName = Path.GetFileNameWithoutExtension(filePath);
 
-                var destinationWidth = (int)(sourceWidth * scale);
-                var destinationHeight = (int)(sourceHeight * scale);
+                    var sourceWidth = imgPhoto.Width;
+                    var sourceHeight = imgPhoto.Height;
 
-                using var scaledBitmap = bitmap.Resize(
-                    new SKImageInfo(destinationWidth, destinationHeight),
-                    SKFilterQuality.High);
-                using var scaledImage = SKImage.FromBitmap(scaledBitmap);
-                using var data = scaledImage.Encode(SKEncodedImageFormat.Jpeg, 100);
-                using var s = File.OpenWrite(Path.Combine(destPath, imgName + ".jpg"));
-                data.SaveTo(s);
+                    var destinationWidth = (int)(sourceWidth * scale);
+                    var destinationHeight = (int)(sourceHeight * scale);
+
+                    using var scaledBitmap = bitmap.Resize(
+                        new SKImageInfo(destinationWidth, destinationHeight),
+                        SKFilterQuality.High);
+                    using var scaledImage = SKImage.FromBitmap(scaledBitmap);
+                    using var data = scaledImage.Encode(SKEncodedImageFormat.Jpeg, 100);
+                    using var s = File.OpenWrite(Path.Combine(destPath, imgName + ".jpg"));
+                    data.SaveTo(s);
+                }));
             }
+
+            return Task.WhenAll(tasks);
         }
 
         /// <summary>
@@ -113,5 +120,7 @@ namespace SkImageResizer
             files.AddRange(Directory.GetFiles(srcPath, "*.jpeg", SearchOption.AllDirectories));
             return files;
         }
+
+
     }
 }
