@@ -46,14 +46,14 @@ namespace SkImageResizer
             }
         }
 
-        public Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
+        public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             if (!Directory.Exists(destPath))
             {
                 Directory.CreateDirectory(destPath);
             }
 
-            //await Task.Yield();
+            await Task.Yield();
             List<Task> tasks = new List<Task>();
 
             var allFiles = FindImages(sourcePath);
@@ -83,7 +83,7 @@ namespace SkImageResizer
                 }));
             }
 
-            return Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
         }
 
         /// <summary>
